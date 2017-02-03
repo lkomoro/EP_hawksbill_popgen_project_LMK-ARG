@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # make sure you have Rtools installed
 #if (!require('devtools')) install.packages('devtools')#can comment out if/once you have installed
 # install from GitHub
-devtools::install_github('ericarcher/strataG', build_vignettes = TRUE)#need internet connection. don't need to run
+#devtools::install_github('ericarcher/strataG', build_vignettes = TRUE)#need internet connection. don't need to run
 #every time, just if you think Eric's made changes and you want to update
 library(strataG)
 library(plyr)
@@ -63,15 +63,21 @@ table(Msat.Ei.geno.a$SITE)
 table(Msat.Ei.geno.a$Country)
 
 #run if want to remove samples where have less than X in a strata or missing data for an entire locus:
-Msat.Ei.geno.short<-subset(Msat.Ei.geno.a,Country!="Panama")
-Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,Country!="Mexico")
+Msat.Ei.geno.short<-subset(Msat.Ei.geno.a,SITE!="Costa Careyes")
+Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="La Flor")
+Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Los Cobanos")
+Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Mata Oscura")
+Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Punta Amapala")
+
+table(Msat.Ei.geno.short$SITE)
+
 Msat.Ei.geno.short<-Msat.Ei.geno.short[,7:57]#remove extra columns so first one is LabID
 ```
 
 ###Create a diploid gtypes object####
 ```{r gtypes, include=TRUE}
 Msat.g <- new("gtypes", gen.data = Msat.Ei.geno.short[, -1], ploidy = 2,
-                     ind.names = Msat.Ei.geno.short[, 1], schemes = strata.schemes, strata="Country")
+                     ind.names = Msat.Ei.geno.short[, 1], schemes = strata.schemes, strata="SITE")
 summary(Msat.g) #this gives a quick summary
 save(Msat.g, file = paste(description, "_gtypes.rdata", sep=""))
 ```
