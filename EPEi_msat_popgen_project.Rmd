@@ -172,5 +172,5 @@ write.csv(oh, paste(description, "_Ho.csv", sep = ""))
 ```
 
 ###Follow up scripts:
-1. Genetics graphs- integrating StrataG and ggplots to generate graphics of interest for basic genetic analyses:add in as needed here.
+1. See 'Genetic_graphs_EA_LK_incorporated.rmd' in Pop genomics repository -Genetics graphs- integrating StrataG and ggplots to generate graphics of interest for basic genetic analyses:add in as needed here.
 2. STRUCTURE, PHASE scripts-to run these other programs through StrataG:add in as needed here.
