@@ -1,7 +1,7 @@
 ---
 title: "EP_Ei_msat_DA"
 author: "Lisa Komoroske"
-date: "February 2, 2017"
+date: "February 16, 2017"
 output: html_document
 ---
 
@@ -28,14 +28,18 @@ getwd()#this just double checks that you are where you wanted to be
 ###Intro: set keys and load data
 ```{r intro, include=TRUE}
 
-description <- "EiMSat_2017-02-03"
-strata.file <- "Ei_strata_msats.csv"
-genotypes.file <- "EP Ei genotypes_LK_strataG_input.csv"
+description <- "EiMSat_2017-02-16_noDups"
+strata.file <- "Ei_strata_msats_dup_marked.csv"
+genotypes.file <- "EP Ei genotypes_DupsRemoved_strataG_input.csv"
 
 #read in data ####
 Msat.Ei.geno <- readGenData(genotypes.file) #analysis set export with population column removed
+Msat.Ei.geno<-subset(Msat.Ei.geno,Dups=="N")#remove previously identified/marked duplicates
     #missing genotype must be "NA" (not "0")
 Msat.Ei.strata <- readGenData(strata.file) #LABID and population from analysis set.
+Msat.Ei.strata <- subset(Msat.Ei.strata,Dups=="N")
+
+
 strata.schemes <- Msat.Ei.strata[, c("SITE","Country")]#note-here you can have additional columns, and then this makes it easy to switch between strata levels below
 rownames(strata.schemes) <- Msat.Ei.strata$LabID
 
@@ -70,7 +74,7 @@ Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Punta Amapala")
 
 table(Msat.Ei.geno.short$SITE)
 
-Msat.Ei.geno.short<-Msat.Ei.geno.short[,7:57]#remove extra columns so first one is LabID
+Msat.Ei.geno.short<-Msat.Ei.geno.short[,8:58]#remove extra columns so first one is LabID
 ```
 
 ###Create a diploid gtypes object####
