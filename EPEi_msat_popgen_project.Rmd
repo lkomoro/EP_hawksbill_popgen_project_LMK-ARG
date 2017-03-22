@@ -15,14 +15,11 @@ knitr::opts_chunk$set(echo = TRUE)
 # make sure you have Rtools installed
 #if (!require('devtools')) install.packages('devtools')#can comment out if/once you have installed
 # install from GitHub
-#devtools::install_github('ericarcher/strataG', build_vignettes = TRUE)#need internet connection. don't need to run
-#every time, just if you think Eric's made changes and you want to update
+#devtools::install_github('ericarcher/strataG', build_vignettes = TRUE)#need internet connection. don't need to run every time, just if you think Eric's made changes and you want to update
 library(strataG)
 library(plyr)
 rm(list = ls())
 options(stringsAsFactors = F)
-#setwd('~/Documents/Manuscripts/Gaos et al. Hawksbill genetic structure with Msats/EP_hawksbill_popgen_project')#change this accordingly
-getwd()#this just double checks that you are where you wanted to be
 ```
 
 ###Intro: set keys and load data
@@ -31,15 +28,13 @@ getwd()#this just double checks that you are where you wanted to be
 description <- "EiMSat_2017-02-16_noDups"
 strata.file <- "Ei_strata_msats_dup_marked.csv"
 genotypes.file <- "EP Ei genotypes_DupsRemoved_strataG_input.csv"
-
+geno.data.start<-8 #make this number match the last column before genotype data
 #read in data ####
 Msat.Ei.geno <- readGenData(genotypes.file) #analysis set export with population column removed
 Msat.Ei.geno<-subset(Msat.Ei.geno,Dups=="N")#remove previously identified/marked duplicates
-    #missing genotype must be "NA" (not "0")
+#missing genotype must be "NA" (not "0")
 Msat.Ei.strata <- readGenData(strata.file) #LABID and population from analysis set.
 Msat.Ei.strata <- subset(Msat.Ei.strata,Dups=="N")
-
-
 strata.schemes <- Msat.Ei.strata[, c("SITE","Country")]#note-here you can have additional columns, and then this makes it easy to switch between strata levels below
 rownames(strata.schemes) <- Msat.Ei.strata$LabID
 
@@ -56,7 +51,7 @@ This takes out rows that are missing more data for than 75% of the markers. You 
 ```{r dataQC1, include=TRUE}
 #Run these lines if you want to take out the samples that have missing data over a certain percent: #####
 numNAs<-apply(Msat.Ei.geno, 1, function(z) sum(is.na(z)))
-Msat.Ei.geno.a<-Msat.Ei.geno[!(numNAs>((ncol(Msat.Ei.geno)-(NCOL(Msat.Ei.strata)-1))*0.75)),]
+Msat.Ei.geno.a<-Msat.Ei.geno[!(numNAs>((ncol(Msat.Ei.geno)-geno.data.start)*0.75)),]
 ```
 
 ### Data QC: check for bad strata with low numbers of samples  
@@ -72,15 +67,15 @@ Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Los Cobanos")
 Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Mata Oscura")
 Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Punta Amapala")
 
-table(Msat.Ei.geno.short$SITE)
+table(Msat.Ei.geno.short$SITE)#check that it has all you want included
 
 Msat.Ei.geno.short<-Msat.Ei.geno.short[,8:58]#remove extra columns so first one is LabID
 ```
 
 ###Create a diploid gtypes object####
 ```{r gtypes, include=TRUE}
-Msat.g <- new("gtypes", gen.data = Msat.Ei.geno.short[, -1], ploidy = 2,
-                     ind.names = Msat.Ei.geno.short[, 1], schemes = strata.schemes, strata="SITE")
+Msat.g <- df2gtypes(Msat.Ei.geno.short, ploidy = 2, id.col=1, loc.col=2,schemes = strata.schemes)
+Msat.g <- stratify(Msat.g, "SITE")
 summary(Msat.g) #this gives a quick summary
 save(Msat.g, file = paste(description, "_gtypes.rdata", sep=""))
 ```
