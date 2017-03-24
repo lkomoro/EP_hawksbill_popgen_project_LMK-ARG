@@ -45,20 +45,30 @@ Msat.Ei.geno[Msat.Ei.geno==0]=NA
 View(Msat.Ei.geno)
 ```
 
-###Data QC: Check for samples missing a lot of data  
-This takes out rows that are missing more data for than 75% of the markers. You can change the percent in the formula as you like (right now is 0.75 above).  
-***(Note that we are counting the NAs, so the percent is the inversion, i.e. if more than 75% of the loci have NAs-we have data for less than 25% of the markers)***
+###Data QC: Check for samples missing data  
+This takes out cases that are missing more data for than X% of the markers. You can change the percent in the formula as you like.  
+***(Note that we are counting the NAs, so the percent is the inversion, i.e. if more than 25% of the loci have NAs-we have data for less than 75% of the markers)***
 ```{r dataQC1, include=TRUE}
 #Run these lines if you want to take out the samples that have missing data over a certain percent: #####
 numNAs<-apply(Msat.Ei.geno, 1, function(z) sum(is.na(z)))
-Msat.Ei.geno.a<-Msat.Ei.geno[!(numNAs>((ncol(Msat.Ei.geno)-geno.data.start)*0.75)),]
+Msat.Ei.geno.a<-Msat.Ei.geno[!(numNAs>((ncol(Msat.Ei.geno)-geno.data.start)*0.25)),]
 ```
 
+```{r dataQC2, include=TRUE}
+
+
+#run if want to remove samples where have less than X in a strata or missing data for an entire locus:
+#Msat.Cm.geno.short<-subset(Msat.Cm.geno.a,Broad!="XX")
+
+```
 ### Data QC: check for bad strata with low numbers of samples  
 This shows you the counts for each location, can then subset out  
 ```{r dataQC2, include=TRUE}
-table(Msat.Ei.geno.a$SITE)
-table(Msat.Ei.geno.a$Country)
+dir.create(description)#makes a directory to put all your output files for organization purposes
+setwd(paste(getwd(),"/",description,sep=""))#change your WD so all files get put there from this run
+#note this just a quick look by strata-doesn't account for any samples that were dropped from above due to a lot of missing data
+t1<-table(Msat.Ei.geno.a$SITE)
+t2<-table(Msat.Ei.geno.a$Country)
 
 #run if want to remove samples where have less than X in a strata or missing data for an entire locus:
 Msat.Ei.geno.short<-subset(Msat.Ei.geno.a,SITE!="Costa Careyes")
@@ -67,8 +77,8 @@ Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Los Cobanos")
 Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Mata Oscura")
 Msat.Ei.geno.short<-subset(Msat.Ei.geno.short,SITE!="Punta Amapala")
 
-table(Msat.Ei.geno.short$SITE)#check that it has all you want included
-
+t3<-table(Msat.Ei.geno.short$SITE)#check that it has all you want included
+write.csv(t3, file = paste(description, "_counts_bystrata_afterNAremoval.csv", sep = ""))#if want to write out to output files
 Msat.Ei.geno.short<-Msat.Ei.geno.short[,8:58]#remove extra columns so first one is LabID
 ```
 
@@ -121,12 +131,17 @@ for(g in strataSplit(Msat.g)) {
 }# or use this if want to run and bind multiple things together that have the same dimensions
 
 #Allele Frequencies:
-z<-alleleFreqs(Msat.g, by.strata = FALSE)# list of allele frequencies for each locus. Each element is a matrix or array with 
-#frequencies by count (freq) and proportion (prop) of each allele.
-#can change to strata=TRUE if want by to do for each strata
-z#just look at on screen for now to check-different loci have different lengths (# of alleles) 
-z$ERIM04t# to look at one-I need to come back and fix code to write to file by locus
-write.csv(z$ERIM04t, file = paste(description, "_ERIM04t_alleleFreq.csv", sep = ""))#example-can do one by one but I will put the loci names in a list and loop them
+AF<-alleleFreqs(Msat.g, by.strata = FALSE)# list of allele frequencies for each locus. Each element is a matrix or array with frequencies by count (freq) and proportion (prop) of each allele.
+for(loc in names(AF)) {
+  fname <- paste(description, loc, "overall_allele.freqs.csv", sep = "_")
+  write.csv(AF[[loc]], file = fname)
+}
+#strata=TRUE if want by to do for each strata
+af <- alleleFreqs(Msat.g, by.strata=T)
+for(loc in names(af)) {
+  fname <- paste(description, loc, "bystrata_allele.freqs.csv", sep = "_")
+  write.csv(af[[loc]][, "freq", ], file = fname)
+}
 
 #this jackknifes n samples at a time (set to 1) to see how affects HWE 
 Msat.Ei.JackHWE<-jackHWE(Msat.g, exclude.num = 1, min.hwe.samples = 3, show.progress = TRUE,
